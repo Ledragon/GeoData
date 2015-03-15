@@ -1,0 +1,23 @@
+{
+  "name": "GeoData",
+  "version": "0.0.0",
+  "authors": [
+    "Ledragon <hugues.stefanski@gmail.com>"
+  ],
+  "description": "Digging in GeoData provided by Natural Earth",
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.3",
+    "bootstrap": "~3.3.2",
+    "d3": "~3.5.5",
+    "topojson": "~1.6.18"
+  }
+}
