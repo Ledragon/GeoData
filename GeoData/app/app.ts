@@ -2,17 +2,32 @@
 /// <reference path="../scripts/topojson.d.ts" />
 class app {
     private _mapGroup: D3.Selection;
+    private _countriesGroup: D3.Selection;
+    private _svg: D3.Selection;
+    private _zoom: D3.Behavior.Zoom;
 
+    private width = 800;
+    private height = 600;
+
+    private _active: D3.Selection;
     constructor() {
-        var width = 800;
-        var height = 600;
         var svg = d3.select('svg').attr({
-            width: width,
-            height: height
+            width: this.width,
+            height: this.height
         });
+
+        this._zoom = d3.behavior.zoom()
+            .translate([0, 0])
+            .scale(1)
+            .scaleExtent([0.1, 50])
+            .on('zoom', this.zoomed());
+        svg.call(this._zoom);
+
         //this.drawUk(svg);
-        this.drawWorld(svg, width, height);
+        //this.drawWorld(svg, width, height);
+        this.loadTopoJson();
         this._mapGroup = svg.append('g').classed('map-group', true);
+        this._svg = svg;
     }
 
     private drawUk(svg, width, height) {
@@ -43,7 +58,8 @@ class app {
 
                 svg.selectAll('.subunit')
                     .data(topojson.feature(uk, uk.objects.subunits).features)
-                    .enter().append('path')
+                    .enter()
+                    .append('path')
                     .attr('class', function (d) { return 'subunit ' + d.id; })
                     .attr('d', pathGenerator);
             }
@@ -61,12 +77,12 @@ class app {
 
         var mercatorProjection = d3.geo.mercator()
             .center([2, 47])
-            .scale(2200);
+            .scale(200);
 
         var pathGenerator = this.getPathGenerator(mercatorProjection);
 
         var self = this;
-        d3.json('data/countries.topo.json',(error, data) => {
+        d3.json('data/json/countries.topo.json',(error, data) => {
             if (error) {
                 console.log(error);
             }
@@ -78,6 +94,8 @@ class app {
                     .attr('d', pathGenerator)
                     .style({
                     'fill': '#dedede'
+                }).on('click',(d, i) => {
+                    console.log(d);
                 });
 
                 countriesGroup.append('path')
@@ -127,6 +145,76 @@ class app {
                 //console.log(data);
             }
         });
+    }
+
+    private loadTopoJson() {
+        var self = this;
+        d3.json('data/110m/json/countries.topo.json',(error, data) => {
+            if (error) {
+                console.log(error);
+            }
+            else {
+                var countries = topojson.feature(data, data.objects.countries);
+
+                var mercatorProjection = d3.geo.mercator()
+                    .center([2, 47])
+                    .scale(100);
+
+
+                var pathGenerator = this.getPathGenerator(mercatorProjection);
+                var countriesGroup = d3.select('svg').append('g');
+                countriesGroup.selectAll('path')
+                    .data(countries.features)
+                    .enter()
+                    .append('path')
+                    .attr('d',(d, i) => pathGenerator(d))
+                    .attr('id',(d, i) => d.properties.name)
+                    .classed('normal',true)
+                    .on('click', this.clicked(pathGenerator));
+                self._countriesGroup = countriesGroup;
+                //countriesGroup.append('path')
+                //    .datum(countries)
+                //    .attr('d', pathGenerator)
+                //    .style({
+                //    'fill': '#dedede'
+                //}).on('click',(d, i) => {
+                //    console.log(d);
+                //});
+            }
+        })
+    }
+
+    private clicked(pathGenerator): any {
+        var self = this;
+        return (d, i) => {
+            d3.select('#countryName').text(d.properties.name);
+            var bounds = pathGenerator.bounds(d);
+            var dx = bounds[1][0] - bounds[0][0];
+            var dy = bounds[1][1] - bounds[0][1];
+            var x = (bounds[0][0] + bounds[1][0]) / 2;
+            var y = (bounds[0][1] + bounds[1][1]) / 2;
+            var scale = .9 / Math.max(dx / this.width, dy / this.height);
+            var translate = [this.width / 2 - scale * x, this.height / 2 - scale * y];
+            if (self._active) {
+                self._active.classed('selected', false);
+            }
+            self._active = d3.select(d3.event.target).classed('selected', true);
+            //TODO redraw using a better resolution
+            //TODO load subunits
+            self._svg
+                .transition()
+                .duration(500)
+                .call((<any>self._zoom.translate(translate).scale(scale)).event);
+        }
+    }
+
+    private zoomed(): any {
+        var self = this;
+        return () => {
+            console.log('translate: ' + d3.event.translate);
+            console.log('scale: ' + d3.event.scale);
+            self._countriesGroup.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+        }
     }
 
     getPathGenerator(projection): D3.Geo.Path {

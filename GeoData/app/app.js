@@ -2,15 +2,19 @@
 /// <reference path="../scripts/topojson.d.ts" />
 var app = (function () {
     function app() {
-        var width = 800;
-        var height = 600;
+        this.width = 800;
+        this.height = 600;
         var svg = d3.select('svg').attr({
-            width: width,
-            height: height
+            width: this.width,
+            height: this.height
         });
+        this._zoom = d3.behavior.zoom().translate([0, 0]).scale(1).scaleExtent([0.1, 50]).on('zoom', this.zoomed());
+        svg.call(this._zoom);
         //this.drawUk(svg);
-        this.drawWorld(svg, width, height);
+        //this.drawWorld(svg, width, height);
+        this.loadTopoJson();
         this._mapGroup = svg.append('g').classed('map-group', true);
+        this._svg = svg;
     }
     app.prototype.drawUk = function (svg, width, height) {
         d3.json('data/uk.json', function (error, uk) {
@@ -35,10 +39,10 @@ var app = (function () {
     app.prototype.drawWorld = function (svg, width, height) {
         var countriesGroup = svg.append('g').classed('countries', true);
         var projection = d3.geo.albers().center([0, 55.4]).rotate([4.4, 0]).parallels([50, 60]).scale(100).translate([width / 2, height / 2]);
-        var mercatorProjection = d3.geo.mercator().center([2, 47]).scale(2200);
+        var mercatorProjection = d3.geo.mercator().center([2, 47]).scale(200);
         var pathGenerator = this.getPathGenerator(mercatorProjection);
         var self = this;
-        d3.json('data/countries.topo.json', function (error, data) {
+        d3.json('data/json/countries.topo.json', function (error, data) {
             if (error) {
                 console.log(error);
             }
@@ -46,6 +50,8 @@ var app = (function () {
                 var countries = topojson.feature(data, data.objects.countries);
                 countriesGroup.append('path').datum(countries).attr('d', pathGenerator).style({
                     'fill': '#dedede'
+                }).on('click', function (d, i) {
+                    console.log(d);
                 });
                 countriesGroup.append('path').datum(topojson.mesh(data, data.objects.countries, function (a, b) { return a !== b; })).attr('d', pathGenerator).style({
                     'fill': 'none',
@@ -79,6 +85,52 @@ var app = (function () {
                 });
             }
         });
+    };
+    app.prototype.loadTopoJson = function () {
+        var _this = this;
+        var self = this;
+        d3.json('data/110m/json/countries.topo.json', function (error, data) {
+            if (error) {
+                console.log(error);
+            }
+            else {
+                var countries = topojson.feature(data, data.objects.countries);
+                var mercatorProjection = d3.geo.mercator().center([2, 47]).scale(100);
+                var pathGenerator = _this.getPathGenerator(mercatorProjection);
+                var countriesGroup = d3.select('svg').append('g');
+                countriesGroup.selectAll('path').data(countries.features).enter().append('path').attr('d', function (d, i) { return pathGenerator(d); }).attr('id', function (d, i) { return d.properties.name; }).classed('normal', true).on('click', _this.clicked(pathGenerator));
+                self._countriesGroup = countriesGroup;
+            }
+        });
+    };
+    app.prototype.clicked = function (pathGenerator) {
+        var _this = this;
+        var self = this;
+        return function (d, i) {
+            d3.select('#countryName').text(d.properties.name);
+            var bounds = pathGenerator.bounds(d);
+            var dx = bounds[1][0] - bounds[0][0];
+            var dy = bounds[1][1] - bounds[0][1];
+            var x = (bounds[0][0] + bounds[1][0]) / 2;
+            var y = (bounds[0][1] + bounds[1][1]) / 2;
+            var scale = .9 / Math.max(dx / _this.width, dy / _this.height);
+            var translate = [_this.width / 2 - scale * x, _this.height / 2 - scale * y];
+            if (self._active) {
+                self._active.classed('selected', false);
+            }
+            self._active = d3.select(d3.event.target).classed('selected', true);
+            //TODO redraw using a better resolution
+            //TODO load subunits
+            self._svg.transition().duration(500).call(self._zoom.translate(translate).scale(scale).event);
+        };
+    };
+    app.prototype.zoomed = function () {
+        var self = this;
+        return function () {
+            console.log('translate: ' + d3.event.translate);
+            console.log('scale: ' + d3.event.scale);
+            self._countriesGroup.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+        };
     };
     app.prototype.getPathGenerator = function (projection) {
         var pathGenerator = d3.geo.path().projection(projection);

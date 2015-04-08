@@ -161,6 +161,9 @@
     <Content Include="bower_components\jquery\bower.json" />
     <Content Include="bower_components\jquery\dist\jquery.min.map" />
     <Content Include="bower_components\jquery\src\sizzle\dist\sizzle.min.map" />
+    <Content Include="content\app.css.map">
+      <DependentUpon>app.css</DependentUpon>
+    </Content>
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -285,8 +288,17 @@
     <Content Include="bower_components\jquery\src\var\support.js" />
     <Content Include="bower_components\jquery\src\var\toString.js" />
     <Content Include="bower_components\jquery\src\wrap.js" />
+    <None Include="content\app.less" />
+    <Content Include="content\app.css">
+      <DependentUpon>app.less</DependentUpon>
+    </Content>
+    <Content Include="content\app.min.css">
+      <DependentUpon>app.css</DependentUpon>
+    </Content>
     <Content Include="index.html" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -294,6 +306,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="app\app.ts" />
     <TypeScriptCompile Include="scripts\topojson.d.ts" />
+    <TypeScriptCompile Include="typings\d3\d3.d.ts" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
