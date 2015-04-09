@@ -5,8 +5,11 @@
   fill: #9c914f;
   visibility: hidden;
 }
-.province {
+.subUnit {
   fill: #748e54;
   border: solid 2px #955e42;
+}
+.subUnitsNames text {
+  text-anchor: middle;
 }
 /*# sourceMappingURL=app.css.map */

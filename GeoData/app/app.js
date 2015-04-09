@@ -109,7 +109,8 @@ var app = (function () {
                 var countriesGroup = d3.select('svg').append('g');
                 countriesGroup.selectAll('path').data(countries.features).enter().append('g').attr('id', function (d, i) { return d.properties.adm0_a3; }).append('path').attr('d', function (d, i) { return pathGenerator(d); }).classed('normal', true).on('click', _this.clicked(pathGenerator));
                 self._countriesGroup = countriesGroup;
-                self._countriesGroup.append('g').classed('provinces', true);
+                self._countriesGroup.append('g').classed('subUnits', true);
+                self._countriesGroup.append('g').classed('subUnitsNames', true);
             }
         });
     };
@@ -138,21 +139,21 @@ var app = (function () {
         var subUnits = self._subUnits.features.filter(function (sd, i) {
             return sd.properties.adm0_a3 === d.properties.adm0_a3;
         });
-        var data = self._countriesGroup.select('.provinces').selectAll('.province').data(subUnits);
-        var newGroups = data.enter().append('g').classed('province', true);
-        data.selectAll('text').remove();
-        data.selectAll('path').remove();
-        data.append('text').text(function (sd, i) {
-            return sd.properties.name;
-        });
-        data.append('path').attr('d', function (sd, i) {
+        var data = self._countriesGroup.select('.subUnits').selectAll('.subUnit').data(subUnits);
+        data.enter().append('path').classed('subUnit', true);
+        data.attr('d', function (sd, i) {
             return pathGenerator(sd);
         });
-        //newGroups.append('path');
-        //newGroups.append('text');
-        //data.selectAll('text').text((sd, j) => j + ' ' + sd.properties.name);
-        //data.attr('d',(sd, i) => pathGenerator(sd));
         data.exit().remove();
+        var textData = self._countriesGroup.select('.subUnitsNames').selectAll('text').data(subUnits);
+        textData.enter().append('text').attr('dy', '.35em');
+        textData.attr({
+            'x': function (sd, i) { return pathGenerator.centroid(sd)[0]; },
+            'y': function (sd, i) { return pathGenerator.centroid(sd)[1]; }
+        }).text(function (sd, i) {
+            return sd.properties.name;
+        });
+        textData.exit().remove();
     };
     app.prototype.zoomed = function () {
         var self = this;
@@ -160,6 +161,7 @@ var app = (function () {
             console.log('translate: ' + d3.event.translate);
             console.log('scale: ' + d3.event.scale);
             self._countriesGroup.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+            self._countriesGroup.selectAll('text').attr('dy', (0.35 / d3.event.scale) + 'em');
         };
     };
     app.prototype.getPathGenerator = function (projection) {

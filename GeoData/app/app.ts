@@ -186,7 +186,8 @@ class app {
                     .classed('normal', true)
                     .on('click', this.clicked(pathGenerator));
                 self._countriesGroup = countriesGroup;
-                self._countriesGroup.append('g').classed('provinces', true);
+                self._countriesGroup.append('g').classed('subUnits', true);
+                self._countriesGroup.append('g').classed('subUnitsNames', true);
                 //countriesGroup.append('path')
                 //    .datum(countries)
                 //    .attr('d', pathGenerator)
@@ -226,32 +227,39 @@ class app {
         }
     }
 
-    private drawSubUnits(self: app, d, pathGenerator) {
+    private drawSubUnits(self: app, d, pathGenerator: D3.Geo.Path) {
         var subUnits = self._subUnits.features.filter((sd, i) => {
             return sd.properties.adm0_a3 === d.properties.adm0_a3;
         });
+
         var data = self._countriesGroup
-            .select('.provinces')
-            .selectAll('.province')
+            .select('.subUnits')
+            .selectAll('.subUnit')
             .data(subUnits);
-        var newGroups = data.enter()
-            .append('g')
-            .classed('province', true);
-        data.selectAll('text').remove();
-        data.selectAll('path').remove();
-        data.append('text')
-            .text((sd, i) => {
-                return sd.properties.name;
-            });
-        data.append('path')
-            .attr('d',(sd, i) => {
-                return pathGenerator(sd);
-            });
-        //newGroups.append('path');
-        //newGroups.append('text');
-        //data.selectAll('text').text((sd, j) => j + ' ' + sd.properties.name);
-        //data.attr('d',(sd, i) => pathGenerator(sd));
+        data.enter()
+            .append('path')
+            .classed('subUnit', true);
+
+        data.attr('d',(sd, i) => {
+            return pathGenerator(sd);
+        });
         data.exit().remove();
+
+        //var textData = self._countriesGroup
+        //    .select('.subUnitsNames')
+        //    .selectAll('text')
+        //    .data(subUnits);
+        //textData.enter()
+        //    .append('text')
+        //    .attr('dy', '.35em');
+        //textData.attr({
+        //    'x': (sd, i) => pathGenerator.centroid(sd)[0],
+        //    'y': (sd, i) => pathGenerator.centroid(sd)[1]
+        //})
+        //    .text((sd, i) => {
+        //    return sd.properties.name;
+        //});
+        //textData.exit().remove();
     }
 
     private zoomed(): any {
@@ -260,6 +268,7 @@ class app {
             console.log('translate: ' + d3.event.translate);
             console.log('scale: ' + d3.event.scale);
             self._countriesGroup.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+            self._countriesGroup.selectAll('text').attr('dy', (0.35 / d3.event.scale) + 'em');
         }
     }
 
