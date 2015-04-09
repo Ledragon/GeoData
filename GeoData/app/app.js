@@ -107,8 +107,9 @@ var app = (function () {
                 var mercatorProjection = d3.geo.mercator().center([2, 47]).scale(100);
                 var pathGenerator = _this.getPathGenerator(mercatorProjection);
                 var countriesGroup = d3.select('svg').append('g');
-                countriesGroup.selectAll('path').data(countries.features).enter().append('g').append('path').attr('d', function (d, i) { return pathGenerator(d); }).attr('id', function (d, i) { return d.properties.name; }).classed('normal', true).on('click', _this.clicked(pathGenerator));
+                countriesGroup.selectAll('path').data(countries.features).enter().append('g').attr('id', function (d, i) { return d.properties.adm0_a3; }).append('path').attr('d', function (d, i) { return pathGenerator(d); }).classed('normal', true).on('click', _this.clicked(pathGenerator));
                 self._countriesGroup = countriesGroup;
+                self._countriesGroup.append('g').classed('provinces', true);
             }
         });
     };
@@ -137,8 +138,21 @@ var app = (function () {
         var subUnits = self._subUnits.features.filter(function (sd, i) {
             return sd.properties.adm0_a3 === d.properties.adm0_a3;
         });
-        self._countriesGroup.selectAll('.province').remove();
-        self._countriesGroup.selectAll('.province').data(subUnits).enter().append('g').classed('province', true).classed(d.properties.adm0_a3, true).append('path').attr('d', function (sd, i) { return pathGenerator(sd); });
+        var data = self._countriesGroup.select('.provinces').selectAll('.province').data(subUnits);
+        var newGroups = data.enter().append('g').classed('province', true);
+        data.selectAll('text').remove();
+        data.selectAll('path').remove();
+        data.append('text').text(function (sd, i) {
+            return sd.properties.name;
+        });
+        data.append('path').attr('d', function (sd, i) {
+            return pathGenerator(sd);
+        });
+        //newGroups.append('path');
+        //newGroups.append('text');
+        //data.selectAll('text').text((sd, j) => j + ' ' + sd.properties.name);
+        //data.attr('d',(sd, i) => pathGenerator(sd));
+        data.exit().remove();
     };
     app.prototype.zoomed = function () {
         var self = this;

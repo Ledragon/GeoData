@@ -3,3 +3,4 @@ D:\Development\VisualStudio\GeoData\GeoData\bin\GeoData.dll
 D:\Development\VisualStudio\GeoData\GeoData\bin\GeoData.pdb
 D:\Development\VisualStudio\GeoData\GeoData\obj\Debug\GeoData.dll
 D:\Development\VisualStudio\GeoData\GeoData\obj\Debug\GeoData.pdb
+D:\Development\VisualStudio\GeoData\GeoData\obj\Debug\GeoData.csprojResolveAssemblyReference.cache

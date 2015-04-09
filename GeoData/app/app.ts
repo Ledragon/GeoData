@@ -179,12 +179,14 @@ class app {
                     .data(countries.features)
                     .enter()
                     .append('g')
+                    .attr('id',(d, i) => d.properties.adm0_a3)
                     .append('path')
                     .attr('d',(d, i) => pathGenerator(d))
-                    .attr('id',(d, i) => d.properties.name)
+                //.attr('id',(d, i) => d.properties.name)
                     .classed('normal', true)
                     .on('click', this.clicked(pathGenerator));
                 self._countriesGroup = countriesGroup;
+                self._countriesGroup.append('g').classed('provinces', true);
                 //countriesGroup.append('path')
                 //    .datum(countries)
                 //    .attr('d', pathGenerator)
@@ -224,22 +226,32 @@ class app {
         }
     }
 
-    private drawSubUnits(self, d, pathGenerator) {
+    private drawSubUnits(self: app, d, pathGenerator) {
         var subUnits = self._subUnits.features.filter((sd, i) => {
             return sd.properties.adm0_a3 === d.properties.adm0_a3;
         });
-        self._countriesGroup
+        var data = self._countriesGroup
+            .select('.provinces')
             .selectAll('.province')
-            .remove();
-        self._countriesGroup
-            .selectAll('.province')
-            .data(subUnits)
-            .enter()
+            .data(subUnits);
+        var newGroups = data.enter()
             .append('g')
-            .classed('province', true)
-            .classed(d.properties.adm0_a3, true)
-            .append('path')
-            .attr('d',(sd, i) => pathGenerator(sd));
+            .classed('province', true);
+        data.selectAll('text').remove();
+        data.selectAll('path').remove();
+        data.append('text')
+            .text((sd, i) => {
+                return sd.properties.name;
+            });
+        data.append('path')
+            .attr('d',(sd, i) => {
+                return pathGenerator(sd);
+            });
+        //newGroups.append('path');
+        //newGroups.append('text');
+        //data.selectAll('text').text((sd, j) => j + ' ' + sd.properties.name);
+        //data.attr('d',(sd, i) => pathGenerator(sd));
+        data.exit().remove();
     }
 
     private zoomed(): any {
