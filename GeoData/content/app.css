@@ -3,5 +3,10 @@
 }
 .selected {
   fill: #9c914f;
+  visibility: hidden;
+}
+.province {
+  fill: #748e54;
+  border: solid 2px #955e42;
 }
 /*# sourceMappingURL=app.css.map */

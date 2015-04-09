@@ -15,6 +15,15 @@ var app = (function () {
         this.loadTopoJson();
         this._mapGroup = svg.append('g').classed('map-group', true);
         this._svg = svg;
+        var self = this;
+        d3.json('data/10m/json/states-provinces.topo.json', function (error, data) {
+            if (error) {
+                console.log(error);
+            }
+            else {
+                self._subUnits = topojson.feature(data, data.objects['states-provinces']);
+            }
+        });
     }
     app.prototype.drawUk = function (svg, width, height) {
         d3.json('data/uk.json', function (error, uk) {
@@ -121,6 +130,13 @@ var app = (function () {
             self._active = d3.select(d3.event.target).classed('selected', true);
             //TODO redraw using a better resolution
             //TODO load subunits
+            var subUnits = self._subUnits.features.filter(function (sd, i) {
+                return sd.properties.adm0_a3 === d.properties.adm0_a3;
+            });
+            var data = self._countriesGroup.selectAll('.province').data(subUnits);
+            data.enter().append('path');
+            data.attr('d', function (sd, i) { return pathGenerator(sd); }).classed('province', true);
+            data.exit().remove();
             self._svg.transition().duration(500).call(self._zoom.translate(translate).scale(scale).event);
         };
     };

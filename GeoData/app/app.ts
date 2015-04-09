@@ -10,6 +10,9 @@ class app {
     private height = 600;
 
     private _active: D3.Selection;
+
+    private _subUnits: any;
+
     constructor() {
         var svg = d3.select('svg').attr({
             width: this.width,
@@ -28,6 +31,15 @@ class app {
         this.loadTopoJson();
         this._mapGroup = svg.append('g').classed('map-group', true);
         this._svg = svg;
+        var self = this;
+        d3.json('data/10m/json/states-provinces.topo.json',(error, data) => {
+            if (error) {
+                console.log(error);
+            }
+            else {
+                self._subUnits = topojson.feature(data, data.objects['states-provinces']);
+            }
+        });
     }
 
     private drawUk(svg, width, height) {
@@ -201,10 +213,21 @@ class app {
             self._active = d3.select(d3.event.target).classed('selected', true);
             //TODO redraw using a better resolution
             //TODO load subunits
+            var subUnits = self._subUnits.features.filter((sd, i) => {
+                return sd.properties.adm0_a3 === d.properties.adm0_a3;
+            });
+            var data = self._countriesGroup.selectAll('.province')
+                .data(subUnits);
+            data.enter()
+                .append('path');
+                data.attr('d',(sd, i) => pathGenerator(sd))
+                .classed('province', true);
+                data.exit().remove();
             self._svg
                 .transition()
                 .duration(500)
                 .call((<any>self._zoom.translate(translate).scale(scale)).event);
+
         }
     }
 
