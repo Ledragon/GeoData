@@ -29,7 +29,7 @@ class app {
         //this.drawUk(svg);
         //this.drawWorld(svg, width, height);
         this.loadTopoJson();
-        this._mapGroup = svg.append('g').classed('map-group', true);
+        //this._mapGroup = svg.append('g').classed('map-group', true);
         this._svg = svg;
         var self = this;
         d3.json('data/10m/json/states-provinces.topo.json',(error, data) => {
@@ -178,10 +178,11 @@ class app {
                 countriesGroup.selectAll('path')
                     .data(countries.features)
                     .enter()
+                    .append('g')
                     .append('path')
                     .attr('d',(d, i) => pathGenerator(d))
                     .attr('id',(d, i) => d.properties.name)
-                    .classed('normal',true)
+                    .classed('normal', true)
                     .on('click', this.clicked(pathGenerator));
                 self._countriesGroup = countriesGroup;
                 //countriesGroup.append('path')
@@ -212,23 +213,33 @@ class app {
             }
             self._active = d3.select(d3.event.target).classed('selected', true);
             //TODO redraw using a better resolution
-            //TODO load subunits
-            var subUnits = self._subUnits.features.filter((sd, i) => {
-                return sd.properties.adm0_a3 === d.properties.adm0_a3;
-            });
-            var data = self._countriesGroup.selectAll('.province')
-                .data(subUnits);
-            data.enter()
-                .append('path');
-                data.attr('d',(sd, i) => pathGenerator(sd))
-                .classed('province', true);
-                data.exit().remove();
+
+            self.drawSubUnits(self, d, pathGenerator);
+
             self._svg
                 .transition()
                 .duration(500)
                 .call((<any>self._zoom.translate(translate).scale(scale)).event);
 
         }
+    }
+
+    private drawSubUnits(self, d, pathGenerator) {
+        var subUnits = self._subUnits.features.filter((sd, i) => {
+            return sd.properties.adm0_a3 === d.properties.adm0_a3;
+        });
+        self._countriesGroup
+            .selectAll('.province')
+            .remove();
+        self._countriesGroup
+            .selectAll('.province')
+            .data(subUnits)
+            .enter()
+            .append('g')
+            .classed('province', true)
+            .classed(d.properties.adm0_a3, true)
+            .append('path')
+            .attr('d',(sd, i) => pathGenerator(sd));
     }
 
     private zoomed(): any {

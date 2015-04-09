@@ -13,7 +13,7 @@ var app = (function () {
         //this.drawUk(svg);
         //this.drawWorld(svg, width, height);
         this.loadTopoJson();
-        this._mapGroup = svg.append('g').classed('map-group', true);
+        //this._mapGroup = svg.append('g').classed('map-group', true);
         this._svg = svg;
         var self = this;
         d3.json('data/10m/json/states-provinces.topo.json', function (error, data) {
@@ -107,7 +107,7 @@ var app = (function () {
                 var mercatorProjection = d3.geo.mercator().center([2, 47]).scale(100);
                 var pathGenerator = _this.getPathGenerator(mercatorProjection);
                 var countriesGroup = d3.select('svg').append('g');
-                countriesGroup.selectAll('path').data(countries.features).enter().append('path').attr('d', function (d, i) { return pathGenerator(d); }).attr('id', function (d, i) { return d.properties.name; }).classed('normal', true).on('click', _this.clicked(pathGenerator));
+                countriesGroup.selectAll('path').data(countries.features).enter().append('g').append('path').attr('d', function (d, i) { return pathGenerator(d); }).attr('id', function (d, i) { return d.properties.name; }).classed('normal', true).on('click', _this.clicked(pathGenerator));
                 self._countriesGroup = countriesGroup;
             }
         });
@@ -129,16 +129,16 @@ var app = (function () {
             }
             self._active = d3.select(d3.event.target).classed('selected', true);
             //TODO redraw using a better resolution
-            //TODO load subunits
-            var subUnits = self._subUnits.features.filter(function (sd, i) {
-                return sd.properties.adm0_a3 === d.properties.adm0_a3;
-            });
-            var data = self._countriesGroup.selectAll('.province').data(subUnits);
-            data.enter().append('path');
-            data.attr('d', function (sd, i) { return pathGenerator(sd); }).classed('province', true);
-            data.exit().remove();
+            self.drawSubUnits(self, d, pathGenerator);
             self._svg.transition().duration(500).call(self._zoom.translate(translate).scale(scale).event);
         };
+    };
+    app.prototype.drawSubUnits = function (self, d, pathGenerator) {
+        var subUnits = self._subUnits.features.filter(function (sd, i) {
+            return sd.properties.adm0_a3 === d.properties.adm0_a3;
+        });
+        self._countriesGroup.selectAll('.province').remove();
+        self._countriesGroup.selectAll('.province').data(subUnits).enter().append('g').classed('province', true).classed(d.properties.adm0_a3, true).append('path').attr('d', function (sd, i) { return pathGenerator(sd); });
     };
     app.prototype.zoomed = function () {
         var self = this;
