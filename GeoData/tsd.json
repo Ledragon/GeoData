@@ -10,6 +10,9 @@
     },
     "d3/d3.d.ts": {
       "commit": "3b2ed809b9e8f7dc4fcc1d80199129a0b73fb277"
+    },
+    "geojson/geojson.d.ts": {
+      "commit": "00e7f3fede5f2df55b56c72f40a144824f0f0bfa"
     }
   }
 }
